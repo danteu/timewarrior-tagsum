@@ -17,20 +17,20 @@ from sys import stdin
 DATETIME_FORMAT = "%Y%m%dT%H%M%SZ"
 
 
-def print_tags(interval_dict: dict) -> None:
+def print_tags(i_dict: dict) -> None:
     """
     Prints all tags and the time spent on them.
     """
-    if not interval_dict:
+    if not i_dict:
         return
 
-    maxlen_key = len(max(interval_dict, key=lambda k: len(k)))
-    maxlen_time = len(str(interval_dict[
-        max(interval_dict, key=lambda k: len(str(interval_dict[k])))]))
+    maxlen_key = len(max(i_dict, key=lambda k: len(k)))
+    maxlen_time = len(str(i_dict[
+        max(i_dict, key=lambda k: len(str(i_dict[k])))]))
 
-    for key in sorted(interval_dict):
+    for key in sorted(i_dict):
         print(key.ljust(maxlen_key), '--',
-              str(interval_dict[key]).rjust(maxlen_time))
+              str(i_dict[key]).rjust(maxlen_time))
 
 
 def interval_len(start, end: str) -> timedelta:
@@ -49,19 +49,19 @@ def interval_len(start, end: str) -> timedelta:
     return i_len
 
 
-def sum_tags(body) -> dict[str, timedelta]:
+def sum_tags(data) -> dict[str, timedelta]:
     """
     Returns a dict that contains the total time spent on each tag in body.
     """
-    foo = {}
-    for x in body:
+    i_dict = {}
+    for x in data:
         tags = x.get("tags") if ("tags" in x) else ["__untagged"]
         for t in tags:
             mylen = interval_len(x.get("start"), x.get("end"))
-            if t not in foo:
-                foo[t] = timedelta(0)
-            foo[t] = foo[t] + mylen
-    return foo
+            if t not in i_dict:
+                i_dict[t] = timedelta(0)
+            i_dict[t] = i_dict[t] + mylen
+    return i_dict
 
 
 def main() -> None:
@@ -77,8 +77,8 @@ def main() -> None:
     for line in stdin:
         data += line
 
-    body_parsed = json.loads(data)
-    print_tags(sum_tags(body_parsed))
+    data_parsed = json.loads(data)
+    print_tags(sum_tags(data_parsed))
 
 
 if __name__ == "__main__":
