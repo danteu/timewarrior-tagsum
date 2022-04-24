@@ -4,20 +4,20 @@ timewarrior extension that prints the total length of time spent on each of the 
 
 ## Installation
 
-```bash
+```console
 curl https://raw.githubusercontent.com/danteu/timewarrior-tagsum/main/tagsum.py > ~/.timewarrior/extensions/tagsum.py && \
 chmod +x ~/.timewarrior/extensions/tagsum.py
 ```
 
 ## Usage
 
-```bash
+```console
 timew tagsum [range] [tag]
 ```
 
-### Example:
+### Example
 
-```bash
+```console
 ~ timew summary :ids
 
 Wk  Date       Day ID Tags           Start      End    Time   Total
