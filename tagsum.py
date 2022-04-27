@@ -19,18 +19,29 @@ DATETIME_FORMAT = "%Y%m%dT%H%M%SZ"
 
 def print_tags(i_dict: dict) -> None:
     """
-    Prints all tags and the time spent on them.
+    Prints all tags and the time spent on them, as well as the total
+    sum of time spent on all tags.
     """
     if not i_dict:
         return
 
-    maxlen_key = len(max(i_dict, key=lambda k: len(k)))
-    maxlen_time = len(str(i_dict[
-        max(i_dict, key=lambda k: len(str(i_dict[k])))]))
+    total_time = sum(i_dict.values(), timedelta())
+
+    maxlen_key = max(
+        len(max(i_dict, key=lambda k: len(k))),
+        len('Total')
+    )
+    maxlen_time = max(
+        len(str(i_dict[max(i_dict, key=lambda k: len(str(i_dict[k])))])),
+        len(str(total_time))
+    )
 
     for key in sorted(i_dict):
         print(key.ljust(maxlen_key), '--',
               str(i_dict[key]).rjust(maxlen_time))
+
+    print('')
+    print('Total'.ljust(maxlen_key), '--', f'{total_time}'.rjust(maxlen_time))
 
 
 def interval_len(start, end: str) -> timedelta:
