@@ -28,6 +28,8 @@ W16 2022-04-23 Sat @3 First Task   9:00:00 11:00:00 2:00:00
                                                             7:30:02
 
 ~ timew tagsum today
-First Task  -- 6:00:11
+First Task  -- 6:00:02
 Second Task -- 1:30:00
+
+Total       -- 7:30:02
 ```
