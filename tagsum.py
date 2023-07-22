@@ -17,7 +17,7 @@ from sys import stdin
 DATETIME_FORMAT = "%Y%m%dT%H%M%SZ"
 
 
-def print_tags(i_dict: dict) -> None:
+def print_tags(i_dict: dict[str, timedelta]) -> None:
     """
     Prints all tags and the time spent on them, as well as the total
     sum of time spent on all tags.
@@ -44,35 +44,59 @@ def print_tags(i_dict: dict) -> None:
     print('Total'.ljust(maxlen_key), '--', f'{total_time}'.rjust(maxlen_time))
 
 
-def interval_len(start, end: str) -> timedelta:
+def interval_len(start: datetime, end: datetime) -> timedelta:
     """
     Returns the length of the time interval between start and end.
-    If end is None, i.e, the passed interval is open, returns the time
-    between start and now.
     """
-    start_date = datetime.strptime(start, DATETIME_FORMAT)
-    end_date = (datetime.utcnow()
-                if end is None
-                else datetime.strptime(end, DATETIME_FORMAT))
-
-    i_len = end_date - start_date
+    i_len = end - start
     i_len -= timedelta(microseconds=i_len.microseconds)
     return i_len
 
 
-def sum_tags(data) -> dict[str, timedelta]:
+def sum_tags(data: list[dict[datetime, datetime]]) -> dict[str, timedelta]:
     """
     Returns a dict that contains the total time spent on each tag in body.
     """
     i_dict = {}
-    for x in data:
-        tags = x.get("tags") if ("tags" in x) else ["__untagged"]
-        for t in tags:
-            mylen = interval_len(x.get("start"), x.get("end"))
-            if t not in i_dict:
-                i_dict[t] = timedelta(0)
-            i_dict[t] = i_dict[t] + mylen
+    for entry in data:
+        tags = entry.get("tags") if ("tags" in entry) else ["__untagged"]
+        for tag in tags:
+            i_len = interval_len(entry.get("start"), entry.get("end"))
+            if tag not in i_dict:
+                i_dict[tag] = timedelta(0)
+            i_dict[tag] = i_dict[tag] + i_len
     return i_dict
+
+
+def convert_timestamps(data: list[dict[str, str]], rep_start: str, rep_end: str) -> None:
+    """
+    Converts the start and end dates in the `data` list to datetime. Make sure
+    that no date lies outside of the (`rep_start`, `rep_end`) interval. If an
+    interval is open, i.e., there is an open time recording, set the end time to now.
+    """
+    rep_start = (datetime.min
+                 if rep_start == ''
+                 else datetime.strptime(rep_start.strip(), DATETIME_FORMAT))
+
+    rep_end = (datetime.max
+               if rep_end == ''
+               else datetime.strptime(rep_end.strip(), DATETIME_FORMAT))
+
+    for entry in data:
+        entry["start"] = max(
+            datetime.strptime(entry["start"], DATETIME_FORMAT),
+            rep_start
+        )
+
+        if entry.get("end") is None:
+            # There can only be one open recording at a time.
+            # Therefore, we don't need to cache the current time for consistency.
+            entry["end"] = datetime.utcnow()
+        else:
+            entry["end"] = min(
+                datetime.strptime(entry["end"], DATETIME_FORMAT),
+                rep_end
+            )
 
 
 def main() -> None:
@@ -83,13 +107,15 @@ def main() -> None:
     for line in stdin:
         if line == "\n":
             break
+        key, *values = line.split(': ', 1)
+        if key == 'temp.report.start':
+            report_start = values[0].strip()
+        elif key == 'temp.report.end':
+            report_end = values[0].strip()
 
-    data = ''
-    for line in stdin:
-        data += line
-
-    data_parsed = json.loads(data)
-    print_tags(sum_tags(data_parsed))
+    data = json.load(stdin)
+    convert_timestamps(data, report_start, report_end)
+    print_tags(sum_tags(data))
 
 
 if __name__ == "__main__":
