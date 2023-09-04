@@ -28,7 +28,7 @@ def print_tags(i_dict: dict[str, timedelta]) -> None:
     total_time = sum(i_dict.values(), timedelta())
 
     maxlen_key = max(
-        len(max(i_dict, key=lambda k: len(k))),
+        len(max(i_dict, key=len)),
         len('Total')
     )
     maxlen_time = max(
@@ -37,8 +37,7 @@ def print_tags(i_dict: dict[str, timedelta]) -> None:
     )
 
     for key in sorted(i_dict):
-        print(key.ljust(maxlen_key), '--',
-              str(i_dict[key]).rjust(maxlen_time))
+        print(key.ljust(maxlen_key), '--', str(i_dict[key]).rjust(maxlen_time))
 
     print('')
     print('Total'.ljust(maxlen_key), '--', f'{total_time}'.rjust(maxlen_time))
@@ -53,7 +52,7 @@ def interval_len(start: datetime, end: datetime) -> timedelta:
     return i_len
 
 
-def sum_tags(data: list[dict[datetime, datetime]]) -> dict[str, timedelta]:
+def sum_tags(data: list[dict[str, datetime]]) -> dict[str, timedelta]:
     """
     Returns a dict that contains the total time spent on each tag in body.
     """
@@ -70,16 +69,14 @@ def sum_tags(data: list[dict[datetime, datetime]]) -> dict[str, timedelta]:
 
 def convert_timestamps(data: list[dict[str, str]], rep_start: str, rep_end: str) -> None:
     """
-    Converts the start and end dates in the `data` list to datetime. Make sure
+    Converts the start and end dates in the `data` list to datetime. Makes sure
     that no date lies outside of the (`rep_start`, `rep_end`) interval. If an
-    interval is open, i.e., there is an open time recording, set the end time to now.
+    interval is open, i.e., there is an open time recording, sets the end time to now.
     """
-    rep_start = (datetime.min
-                 if rep_start == ''
+    rep_start = (datetime.min if rep_start is None
                  else datetime.strptime(rep_start.strip(), DATETIME_FORMAT))
 
-    rep_end = (datetime.max
-               if rep_end == ''
+    rep_end = (datetime.max if rep_end is None
                else datetime.strptime(rep_end.strip(), DATETIME_FORMAT))
 
     for entry in data:
@@ -87,16 +84,8 @@ def convert_timestamps(data: list[dict[str, str]], rep_start: str, rep_end: str)
             datetime.strptime(entry["start"], DATETIME_FORMAT),
             rep_start
         )
-
-        if entry.get("end") is None:
-            # There can only be one open recording at a time.
-            # Therefore, we don't need to cache the current time for consistency.
-            entry["end"] = datetime.utcnow()
-        else:
-            entry["end"] = min(
-                datetime.strptime(entry["end"], DATETIME_FORMAT),
-                rep_end
-            )
+        entry["end"] = (datetime.utcnow() if entry.get("end") is None
+                        else min(datetime.strptime(entry["end"], DATETIME_FORMAT), rep_end))
 
 
 def main() -> None:
@@ -114,7 +103,7 @@ def main() -> None:
             report_end = values[0].strip()
 
     data = json.load(stdin)
-    convert_timestamps(data, report_start, report_end)
+    convert_timestamps(data, report_start or None, report_end or None)
     print_tags(sum_tags(data))
 
 
