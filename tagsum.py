@@ -10,7 +10,7 @@ timew report tagsum [range] [tag]
 timew tagsum [range] [tag]
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC, timezone
 import json
 from sys import stdin
 
@@ -73,19 +73,39 @@ def convert_timestamps(data: list[dict[str, str]], rep_start: str, rep_end: str)
     that no date lies outside of the (`rep_start`, `rep_end`) interval. If an
     interval is open, i.e., there is an open time recording, sets the end time to now.
     """
-    rep_start = (datetime.min if rep_start is None
-                 else datetime.strptime(rep_start.strip(), DATETIME_FORMAT))
+    rep_start = (
+        datetime.min.replace(tzinfo=timezone.utc)
+        if rep_start is None
+        else datetime.strptime(rep_start.strip(), DATETIME_FORMAT).replace(
+            tzinfo=timezone.utc
+        )
+    )
 
-    rep_end = (datetime.max if rep_end is None
-               else datetime.strptime(rep_end.strip(), DATETIME_FORMAT))
+    rep_end = (
+        datetime.max.replace(tzinfo=timezone.utc)
+        if rep_end is None
+        else datetime.strptime(rep_end.strip(), DATETIME_FORMAT).replace(
+            tzinfo=timezone.utc
+        )
+    )
 
     for entry in data:
         entry["start"] = max(
-            datetime.strptime(entry["start"], DATETIME_FORMAT),
+            datetime.strptime(entry["start"], DATETIME_FORMAT).replace(
+                tzinfo=timezone.utc
+            ),
             rep_start
         )
-        entry["end"] = (datetime.utcnow() if entry.get("end") is None
-                        else min(datetime.strptime(entry["end"], DATETIME_FORMAT), rep_end))
+        entry["end"] = (
+            datetime.now(UTC)
+            if entry.get("end") is None
+            else min(
+                datetime.strptime(entry["end"], DATETIME_FORMAT).replace(
+                    tzinfo=timezone.utc
+                ),
+                rep_end,
+            )
+        )
 
 
 def main() -> None:
