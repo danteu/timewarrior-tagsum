@@ -36,7 +36,7 @@ def print_tags(i_dict: dict[str, timedelta]) -> None:
         len(str(total_time))
     )
 
-    for key in sorted(i_dict):
+    for key in sorted(i_dict, key=i_dict.get, reverse=True):
         print(key.ljust(maxlen_key), '--', str(i_dict[key]).rjust(maxlen_time))
 
     print('')
