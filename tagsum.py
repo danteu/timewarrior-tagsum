@@ -17,15 +17,16 @@ from sys import stdin
 DATETIME_FORMAT = "%Y%m%dT%H%M%SZ"
 
 
-def print_tags(i_dict: dict[str, timedelta]) -> None:
+def print_tags(i_tuple: tuple[timedelta, dict[str, timedelta]]) -> None:
     """
     Prints all tags and the time spent on them, as well as the total
     sum of time spent on all tags.
     """
-    if not i_dict:
+    if not i_tuple:
         return
 
-    total_time = sum(i_dict.values(), timedelta())
+    i_dict = i_tuple[1]
+    total_time = i_tuple[0]
 
     maxlen_key = max(
         len(max(i_dict, key=len)),
@@ -52,19 +53,24 @@ def interval_len(start: datetime, end: datetime) -> timedelta:
     return i_len
 
 
-def sum_tags(data: list[dict[str, datetime]]) -> dict[str, timedelta]:
+def sum_tags(
+    data: list[dict[str, datetime]]
+) -> tuple[timedelta, dict[str, timedelta]]:
     """
     Returns a dict that contains the total time spent on each tag in body.
     """
     i_dict = {}
+    total_time = timedelta(0)
     for entry in data:
         tags = entry.get("tags") if ("tags" in entry) else ["__untagged"]
+        i_len = interval_len(entry.get("start"), entry.get("end"))
+        total_time += i_len
+
         for tag in tags:
-            i_len = interval_len(entry.get("start"), entry.get("end"))
             if tag not in i_dict:
                 i_dict[tag] = timedelta(0)
             i_dict[tag] = i_dict[tag] + i_len
-    return i_dict
+    return (total_time, i_dict)
 
 
 def convert_timestamps(data: list[dict[str, str]], rep_start: str, rep_end: str) -> None:
