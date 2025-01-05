@@ -10,7 +10,7 @@ timew report tagsum [range] [tag]
 timew tagsum [range] [tag]
 """
 
-from datetime import datetime, timedelta, UTC, timezone
+from datetime import datetime, timedelta, timezone
 import json
 from sys import stdin
 
@@ -97,7 +97,7 @@ def convert_timestamps(data: list[dict[str, str]], rep_start: str, rep_end: str)
             rep_start
         )
         entry["end"] = (
-            datetime.now(UTC)
+            datetime.now(timezone.utc)
             if entry.get("end") is None
             else min(
                 datetime.strptime(entry["end"], DATETIME_FORMAT).replace(
