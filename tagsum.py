@@ -113,6 +113,8 @@ def main() -> None:
     Reads the config options and the JSON data from stdin, parses the JSON
     data and prints the tags and the tracked time.
     """
+    report_start = report_end = None
+
     for line in stdin:
         if line == "\n":
             break

@@ -1,0 +1,108 @@
+name: Push workflow
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint
+    - name: Analysing the code with pylint
+      run: |
+        pylint $(git ls-files '*.py')
+    - name: Testing the tagsum script
+      run: |
+        INPUT=$(cat <<EOF
+        color: on
+        confirmation: on
+        debug: off
+        journal.size: -1
+        reports.day.axis: internal
+        reports.day.cell: 15
+        reports.day.day: yes
+        reports.day.holidays: no
+        reports.day.hours: all
+        reports.day.lines: 2
+        reports.day.month: no
+        reports.day.spacing: 1
+        reports.day.summary: yes
+        reports.day.totals: no
+        reports.day.week: no
+        reports.day.weekday: yes
+        reports.month.cell: 15
+        reports.month.day: yes
+        reports.month.holidays: yes
+        reports.month.hours: all
+        reports.month.lines: 1
+        reports.month.month: yes
+        reports.month.spacing: 1
+        reports.month.summary: yes
+        reports.month.totals: yes
+        reports.month.week: yes
+        reports.month.weekday: yes
+        reports.summary.holidays: yes
+        reports.week.cell: 15
+        reports.week.day: yes
+        reports.week.holidays: yes
+        reports.week.hours: all
+        reports.week.lines: 1
+        reports.week.month: no
+        reports.week.spacing: 1
+        reports.week.summary: yes
+        reports.week.totals: yes
+        reports.week.week: yes
+        reports.week.weekday: yes
+        temp.report.end:
+        temp.report.start:
+        temp.report.tags:
+        temp.version: 1.7.1
+        theme.colors.exclusion: gray8 on gray4
+        theme.colors.holiday: gray4
+        theme.colors.label: gray4
+        theme.colors.today: white
+        theme.description: Built-in default
+        verbose: on
+        
+        [
+        {"id":5,"start":"20230904T231719Z","end":"20230904T231724Z","tags":["asdf"]},
+        {"id":4,"start":"20230904T231724Z","end":"20230904T231726Z","tags":["wasd"]},
+        {"id":3,"start":"20230904T233012Z","end":"20230904T233017Z","tags":["wasdf"]},
+        {"id":2,"start":"20230904T233017Z","end":"20230904T233019Z","tags":["was"]},
+        {"id":1,"start":"20241111T230955Z","end":"20241111T231001Z","tags":["foo"]}
+        ]
+        EOF
+        )
+
+        EXPECTED=$(cat <<EOF
+        asdf  -- 0:00:05
+        foo   -- 0:00:06
+        was   -- 0:00:02
+        wasd  -- 0:00:02
+        wasdf -- 0:00:05
+
+        Total -- 0:00:20
+
+        EOF
+        )
+
+        OUTPUT=$(python tagsum.py <<< "$INPUT")
+
+        if [ "$OUTPUT" != "$EXPECTED" ]; then
+          echo "Output does not match expected"
+          echo "Expected:"
+          echo "$EXPECTED"
+          echo "Output:"
+          echo "$OUTPUT"
+          exit 1
+        fi
