@@ -8,10 +8,16 @@ timewarrior extension that prints the total length of time spent on each of the 
 
 ## Installation
 
-```console
-curl https://raw.githubusercontent.com/danteu/timewarrior-tagsum/main/tagsum.py > ~/.timewarrior/extensions/tagsum.py && \
-chmod +x ~/.timewarrior/extensions/tagsum.py
-```
+1. Identify the timewarrior extensions directory by running `timew extensions`.
+   Per default, the path should be `~/.config/timewarrior/extensions`.
+2. Copy `tagsum.py` from this repository to your extensions directory and make sure it's executable.
+   If your extensions directory is set to default, you can use the following command:
+
+   ```console
+   curl https://raw.githubusercontent.com/danteu/timewarrior-tagsum/main/tagsum.py > ~/.config/timewarrior/extensions/tagsum.py && \
+   chmod +x ~/.config/timewarrior/extensions/tagsum.py
+   ```
+3. When you run `timew extensions` again, it should now list `tagsum.py` as an active extension.
 
 ## Usage
 
