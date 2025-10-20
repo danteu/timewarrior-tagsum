@@ -1,6 +1,13 @@
 name: Push workflow
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
 
 jobs:
   build:
