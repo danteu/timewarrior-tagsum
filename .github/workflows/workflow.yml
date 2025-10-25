@@ -8,9 +8,28 @@ on:
     types:
       - opened
       - reopened
+      - synchronize
 
 jobs:
-  build:
+  analyze-with-pylint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+      - name: Analysing the code with pylint
+        run: |
+          pylint $(git ls-files '*.py')
+  test-with-test-input:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -111,5 +130,45 @@ jobs:
           echo "$EXPECTED"
           echo "Output:"
           echo "$OUTPUT"
+          exit 1
+        fi
+  test-with-timew:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Timewarrior
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y timewarrior
+    - name: Setup timewarrior database
+      run: |
+        echo "yes" | timew
+    - name: Track some time entries
+      run: |
+        timew track 9am - 11am 'Task 1'
+        timew track 12pm - 1pm 'Task 2'
+        timew track 3pm - 5pm 'Task 1'
+    - name: Install tagsum
+      run: |
+        EXTENSIONS_DIR=$(timew extensions | sed -n '/Extensions located in:/{n;p}' | awk '{$1=$1};1')
+        mkdir -p "$EXTENSIONS_DIR"
+        cp tagsum.py "$EXTENSIONS_DIR/tagsum"
+        chmod +x "$EXTENSIONS_DIR/tagsum"
+    - name: Run tagsum report
+      run: |
+        TAGSUM_OUTPUT=$(timew tagsum today)
+        EXPECTED_OUTPUT=$(cat <<EOF
+        Task 1 -- 4:00:00
+        Task 2 -- 1:00:00
+
+        Total  -- 5:00:00
+        EOF
+        )
+        if [ "$TAGSUM_OUTPUT" != "$EXPECTED_OUTPUT" ]; then
+          echo "Tagsum output does not match expected"
+          echo "Expected:"
+          echo "$EXPECTED_OUTPUT"
+          echo "Got:"
+          echo "$TAGSUM_OUTPUT"
           exit 1
         fi
