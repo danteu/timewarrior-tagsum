@@ -14,12 +14,12 @@ jobs:
   analyze-with-pylint:
     runs-on: ubuntu-latest
     strategy:
-      matrix:
+      matrix: &python-matrix
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -32,12 +32,11 @@ jobs:
   test-with-test-input:
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+      matrix: *python-matrix
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -135,7 +134,7 @@ jobs:
   test-with-timew:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Install Timewarrior
       run: |
         sudo apt-get update
